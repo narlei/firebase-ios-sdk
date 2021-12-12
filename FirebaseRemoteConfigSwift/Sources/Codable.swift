@@ -42,8 +42,6 @@ public extension RemoteConfig {
  * A `Callable` is reference to a particular Callable HTTPS trigger in Cloud Functions.
  */
 public struct Callable<Request: Encodable, Response: Decodable> {
-
-
   enum CallableError: Error {
     case internalError
   }

@@ -22,51 +22,57 @@ private enum Constants {
   static let kirk = "Kirk"
   static let spock = "Spock"
   static let jsonKey = "Recipe"
-  static let recipe = [ "Recipe Name": "PB&J",
-                       "Ingredients" : [ "bread", "peanut butter", "jelly"],
-                        "Cook Time" : 7 ] as [String : AnyHashable]
+  static let recipe = ["Recipe Name": "PB&J",
+                       "Ingredients": ["bread", "peanut butter", "jelly"],
+                       "Cook Time": 7] as [String: AnyHashable]
 }
 
 #if compiler(>=5.5) && canImport(_Concurrency)
   @available(iOS 15, tvOS 15, macOS 12, watchOS 8, *)
-class CodableTests: APITestBase {
-  var console: RemoteConfigConsole!
+  class CodableTests: APITestBase {
+    var console: RemoteConfigConsole!
 
-  override func setUp() {
-    super.setUp()
-    if APITests.useFakeConfig {
-      do {
-        let jsonData = try JSONSerialization.data(withJSONObject: Constants.recipe, options: .prettyPrinted)
-        fakeConsole.config = [Constants.jsonKey: String(data: jsonData, encoding: .ascii)]
-      } catch {
+    override func setUp() {
+      super.setUp()
+      if APITests.useFakeConfig {
+        do {
+          let jsonData = try JSONSerialization.data(
+            withJSONObject: Constants.recipe,
+            options: .prettyPrinted
+          )
+          fakeConsole.config = [Constants.jsonKey: String(data: jsonData, encoding: .ascii)]
+        } catch {
           print("Failed to intialize json data in facke Console \(error.localizedDescription)")
+        }
+      } else {
+        console = RemoteConfigConsole()
+        console.updateRemoteConfigValue(Constants.key1, forKey: Constants.spock)
       }
-    } else {
-      console = RemoteConfigConsole()
-      console.updateRemoteConfigValue(Constants.key1, forKey: Constants.spock)
+    }
+
+    override func tearDown() {
+      super.tearDown()
+
+      // If using RemoteConfigConsole, reset remote config values.
+      if !APITests.useFakeConfig {
+        console.removeRemoteConfigValue(forKey: Constants.key1)
+      }
+    }
+
+    func testFetchAndActivate() async throws {
+      let status = try await config.fetchAndActivate()
+      XCTAssertEqual(status, .successFetchedFromRemote)
+      guard let dict = config[Constants.jsonKey].jsonValue as? [String: AnyHashable] else {
+        XCTFail("Failed to extract json")
+        return
+      }
+      XCTAssertEqual(dict["Recipe Name"], "PB&J")
+      XCTAssertEqual(dict["Ingredients"], ["bread", "peanut butter", "jelly"])
+      XCTAssertEqual(dict["Cook Time"], 7)
+      XCTAssertEqual(
+        config[Constants.jsonKey].jsonValue as! [String: AnyHashable],
+        Constants.recipe
+      )
     }
   }
-
-  override func tearDown() {
-    super.tearDown()
-
-    // If using RemoteConfigConsole, reset remote config values.
-    if !APITests.useFakeConfig {
-      console.removeRemoteConfigValue(forKey: Constants.key1)
-    }
-  }
-
-  func testFetchAndActivate() async throws {
-    let status = try await config.fetchAndActivate()
-    XCTAssertEqual(status, .successFetchedFromRemote)
-    guard let dict = config[Constants.jsonKey].jsonValue as? [String : AnyHashable] else {
-      XCTFail("Failed to extract json")
-      return
-    }
-    XCTAssertEqual(dict["Recipe Name"], "PB&J")
-    XCTAssertEqual(dict["Ingredients"], [ "bread", "peanut butter", "jelly"])
-    XCTAssertEqual(dict["Cook Time"], 7)
-    XCTAssertEqual(config[Constants.jsonKey].jsonValue as! [String: AnyHashable], Constants.recipe)
-  }
-}
 #endif
