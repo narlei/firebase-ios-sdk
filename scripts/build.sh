@@ -488,13 +488,13 @@ case "$product-$platform-$method" in
     pod_gen FirebaseRemoteConfigSwift.podspec --platforms="${gen_platform}"
 
     # Add GoogleService-Info.plist to generated Test Wrapper App.
-    ruby ./scripts/update_xcode_target.rb gen/AppHost-FirebaseRemoteConfigSwiftUnit-Tests/Pods/Pods.xcodeproj \
+    ruby ./scripts/update_xcode_target.rb gen/FirebaseRemoteConfigSwift/Pods/Pods.xcodeproj \
       AppHost-FirebaseRemoteConfigSwift-Unit-Tests \
       ../../../FirebaseRemoteConfig/Tests/SwiftAPI/GoogleService-Info.plist
 
     # Add AccessToken to generated Test Wrapper App.
     ruby ./scripts/update_xcode_target.rb gen/FirebaseRemoteConfigSwift/Pods/Pods.xcodeproj \
-      AppHost-FirebaseRemoteConfigSwiftUnit-Tests \
+      AppHost-FirebaseRemoteConfigSwift-Unit-Tests \
       ../../../FirebaseRemoteConfig/Tests/SwiftAPI/AccessToken.json
 
     RunXcodebuild \
