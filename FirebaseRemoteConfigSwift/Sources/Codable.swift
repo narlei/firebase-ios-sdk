@@ -18,7 +18,12 @@ import Foundation
 import FirebaseRemoteConfig
 import FirebaseSharedSwift
 
-public extension RemoteConfig {
+public enum RemoteConfigCodableError: Error {
+  case valueError
+  case internalError
+}
+
+public extension RemoteConfigValue {
 //  /**
 //   * Creates a reference to the Callable HTTPS trigger with the given name, the type of an `Encodable`
 //   * request and the type of a `Decodable` response.
@@ -36,6 +41,15 @@ public extension RemoteConfig {
 //    -> Callable<Request, Response> {
 //    return Callable(callable: httpsCallable(name), encoder: encoder, decoder: decoder)
 //  }
+  #if compiler(>=5.5) && canImport(_Concurrency)
+    @available(iOS 15, tvOS 15, macOS 12, watchOS 8, *)
+    func decode<Value: Decodable>(valueType: Value.Type) async throws -> Value {
+      guard let jsonValue = self.jsonValue else {
+        throw RemoteConfigCodableError.valueError
+      }
+      return try StructureDecoder().decode(Value.self, from: jsonValue)
+    }
+  #endif
 }
 
 /**
